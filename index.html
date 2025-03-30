@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            color: black;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #2575fc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1a5db4;
+        }
+        .app-list {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .app-item {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 5px solid #2575fc;
+        }
+        .delete-btn {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>App Management</h2>
+        <input type="text" id="app_name" placeholder="App Name" required>
+        <input type="text" id="version" placeholder="Version" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <button onclick="addApp()">Add App</button>
+        <h3>App List</h3>
+        <div class="app-list" id="appList"></div>
+    </div>
+
+    <script>
+        function fetchApps() {
+            fetch('/get-all-apps')
+                .then(response => response.json())
+                .then(data => {
+                    let appList = document.getElementById('appList');
+                    appList.innerHTML = '';
+                    data.forEach(app => {
+                        appList.innerHTML += `
+                            <div class="app-item">
+                                <strong>${app.app_name} (v${app.version})</strong>
+                                <p>${app.description}</p>
+                                <button class="delete-btn" onclick="deleteApp(${app.id})">Delete</button>
+                            </div>
+                        `;
+                    });
+                });
+        }
+        
+        function addApp() {
+            let app_name = document.getElementById('app_name').value.trim();
+            let version = document.getElementById('version').value.trim();
+            let description = document.getElementById('description').value.trim();
+            
+            if (!app_name || !version || !description) {
+                alert("All fields are required!");
+                return;
+            }
+            
+            fetch('/add-app', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({app_name, version, description})
+            }).then(response => response.json()).then(() => {
+                fetchApps();
+                document.getElementById('app_name').value = '';
+                document.getElementById('version').value = '';
+                document.getElementById('description').value = '';
+            });
+        }
+        
+        function deleteApp(id) {
+            fetch(`/delete-app/${id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(() => fetchApps());
+        }
+        
+        fetchApps();
+    </script>
+</body>
+</html>
